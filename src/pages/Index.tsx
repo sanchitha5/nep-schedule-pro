@@ -4,6 +4,8 @@ import Sidebar from "@/components/Layout/Sidebar";
 import DashboardView from "@/components/Dashboard/DashboardView";
 import TimetableView from "@/components/Timetable/TimetableView";
 import CoursesView from "@/components/Courses/CoursesView";
+import StudentsView from "@/components/Students/StudentsView";
+import CurriculumView from "@/components/Curriculum/CurriculumView";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
@@ -17,6 +19,10 @@ const Index = () => {
         return <TimetableView />;
       case "courses":
         return <CoursesView />;
+      case "curriculum":
+        return <CurriculumView />;
+      case "students":
+        return <StudentsView />;
       case "faculty":
         return (
           <div className="space-y-6">
@@ -28,22 +34,6 @@ const Index = () => {
               <CardContent>
                 <p className="text-muted-foreground">
                   Faculty management features will be available soon.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      case "students":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold tracking-tight">Student Management</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Coming Soon</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Student management features will be available soon.
                 </p>
               </CardContent>
             </Card>
