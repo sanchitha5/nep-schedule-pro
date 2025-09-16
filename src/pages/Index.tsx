@@ -8,6 +8,9 @@ import StudentsView from "@/components/Students/StudentsView";
 import CurriculumView from "@/components/Curriculum/CurriculumView";
 import FacultyView from "@/components/Faculty/FacultyView";
 import RoomsView from "@/components/Rooms/RoomsView";
+import SchedulesView from "@/components/Schedules/SchedulesView";
+import ReportsView from "@/components/Reports/ReportsView";
+import SettingsView from "@/components/Settings/SettingsView";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
@@ -30,53 +33,11 @@ const Index = () => {
       case "rooms":
         return <RoomsView />;
       case "schedules":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold tracking-tight">Generated Schedules</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Coming Soon</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Schedule history and management features will be available soon.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <SchedulesView />;
       case "reports":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold tracking-tight">Reports & Analytics</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Coming Soon</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Reporting and analytics features will be available soon.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <ReportsView />;
       case "settings":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold tracking-tight">System Settings</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Coming Soon</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  System configuration features will be available soon.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <SettingsView />;
       default:
         return <DashboardView />;
     }
