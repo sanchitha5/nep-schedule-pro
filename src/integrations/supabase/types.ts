@@ -56,6 +56,138 @@ export type Database = {
         }
         Relationships: []
       }
+      faculty: {
+        Row: {
+          created_at: string
+          department: string
+          designation: string
+          email: string
+          experience_years: number | null
+          faculty_id: string
+          id: string
+          name: string
+          phone: string | null
+          qualification: string | null
+          specialization: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          designation: string
+          email: string
+          experience_years?: number | null
+          faculty_id: string
+          id?: string
+          name: string
+          phone?: string | null
+          qualification?: string | null
+          specialization?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          designation?: string
+          email?: string
+          experience_years?: number | null
+          faculty_id?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          qualification?: string | null
+          specialization?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          building: string | null
+          capacity: number
+          created_at: string
+          facilities: string[] | null
+          floor: string | null
+          id: string
+          name: string
+          room_number: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          building?: string | null
+          capacity: number
+          created_at?: string
+          facilities?: string[] | null
+          floor?: string | null
+          id?: string
+          name: string
+          room_number: string
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          building?: string | null
+          capacity?: number
+          created_at?: string
+          facilities?: string[] | null
+          floor?: string | null
+          id?: string
+          name?: string
+          room_number?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          batch: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          program: string
+          semester: number
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          batch: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          program: string
+          semester: number
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          batch?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          program?: string
+          semester?: number
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

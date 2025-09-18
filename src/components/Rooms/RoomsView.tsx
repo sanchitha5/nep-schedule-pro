@@ -1,561 +1,235 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, MapPin, Users, Monitor, Wifi } from "lucide-react";
-
-interface Room {
-  id: string;
-  name: string;
-  type: "classroom" | "lab" | "seminar" | "auditorium" | "library";
-  building: string;
-  floor: number;
-  capacity: number;
-  facilities: string[];
-  status: "available" | "occupied" | "maintenance";
-  subjects: string[];
-  equipment: string[];
-  accessibility: boolean;
-}
+import { Building, Search, Edit, Trash2, Users, MapPin, Loader2 } from "lucide-react";
+import { useRooms } from "@/hooks/useRooms";
+import { AddRoomDialog } from "./AddRoomDialog";
+import { useState } from "react";
 
 const RoomsView = () => {
-  const [rooms, setRooms] = useState<Room[]>([
-    {
-      id: "1",
-      name: "Room 101",
-      type: "classroom",
-      building: "Main Block",
-      floor: 1,
-      capacity: 60,
-      facilities: ["Projector", "Whiteboard", "AC", "Wi-Fi"],
-      status: "available",
-      subjects: ["Educational Psychology", "General Teaching"],
-      equipment: ["Digital Projector", "Sound System", "Marker Board"],
-      accessibility: true
-    },
-    {
-      id: "2",
-      name: "Science Lab A",
-      type: "lab",
-      building: "Science Block",
-      floor: 2,
-      capacity: 30,
-      facilities: ["Lab Equipment", "Safety Features", "Ventilation", "Wi-Fi"],
-      status: "available",
-      subjects: ["Chemistry Practicals", "Physics Experiments", "Biology Lab"],
-      equipment: ["Microscopes", "Chemical Apparatus", "Safety Equipment", "Lab Benches"],
-      accessibility: true
-    },
-    {
-      id: "3",
-      name: "Computer Lab 1",
-      type: "lab",
-      building: "IT Block",
-      floor: 1,
-      capacity: 40,
-      facilities: ["Computers", "Internet", "AC", "Projector"],
-      status: "occupied",
-      subjects: ["Computer Education", "Digital Literacy", "ICT in Teaching"],
-      equipment: ["40 Desktop Computers", "Interactive Board", "Printer", "Scanner"],
-      accessibility: true
-    },
-    {
-      id: "4",
-      name: "Seminar Hall",
-      type: "seminar",
-      building: "Main Block",
-      floor: 2,
-      capacity: 100,
-      facilities: ["Audio System", "Projector", "Stage", "AC"],
-      status: "available",
-      subjects: ["Seminars", "Guest Lectures", "Presentations"],
-      equipment: ["Wireless Mic", "Podium", "Large Screen", "Recording Equipment"],
-      accessibility: true
-    },
-    {
-      id: "5",
-      name: "Main Auditorium",
-      type: "auditorium",
-      building: "Auditorium Block",
-      floor: 1,
-      capacity: 300,
-      facilities: ["Professional Audio", "Lighting", "Stage", "AC"],
-      status: "maintenance",
-      subjects: ["Annual Functions", "Major Events", "Conferences"],
-      equipment: ["Stage Lighting", "Sound System", "Backstage Area", "Recording Studio"],
-      accessibility: true
-    }
-  ]);
-
+  const { rooms, loading, addRoom, deleteRoom } = useRooms();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedType, setSelectedType] = useState("all");
-  const [selectedBuilding, setSelectedBuilding] = useState("all");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-
-  const roomTypes = ["classroom", "lab", "seminar", "auditorium", "library"];
-  const buildings = ["Main Block", "Science Block", "IT Block", "Auditorium Block", "Library Block"];
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const filteredRooms = rooms.filter(room => {
     const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         room.facilities.some(facility => facility.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         room.subjects.some(subject => subject.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesType = selectedType === "all" || room.type === selectedType;
-    const matchesBuilding = selectedBuilding === "all" || room.building === selectedBuilding;
-    return matchesSearch && matchesType && matchesBuilding;
+                         room.room_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         room.building?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = typeFilter === "all" || room.type === typeFilter;
+    const matchesStatus = statusFilter === "all" || room.status === statusFilter;
+    
+    return matchesSearch && matchesType && matchesStatus;
   });
 
-  const getRoomsByType = (type: string) => rooms.filter(room => room.type === type);
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "available": return "bg-green-500";
-      case "occupied": return "bg-yellow-500";
-      case "maintenance": return "bg-red-500";
-      default: return "bg-gray-500";
+  const clearFilters = () => {
+    setSearchTerm("");
+    setTypeFilter("all");
+    setStatusFilter("all");
+  };
+
+  const handleDeleteRoom = async (roomId: string) => {
+    if (confirm("Are you sure you want to delete this room?")) {
+      await deleteRoom(roomId);
     }
   };
 
-  const handleAddRoom = () => {
-    // Add room logic will be implemented
-    setIsAddDialogOpen(false);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Available": return "bg-success text-success-foreground";
+      case "Occupied": return "bg-warning text-warning-foreground";
+      case "Maintenance": return "bg-destructive text-destructive-foreground";
+      case "Reserved": return "bg-primary text-primary-foreground";
+      default: return "bg-secondary text-secondary-foreground";
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "Classroom": return "bg-primary text-primary-foreground";
+      case "Laboratory": return "bg-accent text-accent-foreground";
+      case "Lecture Hall": return "bg-success text-success-foreground";
+      case "Seminar Room": return "bg-warning text-warning-foreground";
+      default: return "bg-secondary text-secondary-foreground";
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Rooms & Labs Management</h1>
-        <p className="text-muted-foreground">Manage classrooms, laboratories, and other academic spaces</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Room Management</h2>
+          <p className="text-muted-foreground">
+            Manage room allocation and facilities
+          </p>
+        </div>
+        <AddRoomDialog onAddRoom={addRoom} />
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Rooms</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{rooms.length}</div>
-            <p className="text-xs text-muted-foreground">Across all buildings</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Classrooms</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getRoomsByType("classroom").length}</div>
-            <p className="text-xs text-muted-foreground">Regular classrooms</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Laboratories</CardTitle>
-            <Monitor className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getRoomsByType("lab").length}</div>
-            <p className="text-xs text-muted-foreground">Specialized labs</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Capacity</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {rooms.reduce((sum, room) => sum + room.capacity, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Students capacity</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available</CardTitle>
-            <div className={`h-2 w-2 rounded-full ${getStatusColor("available")}`} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {rooms.filter(room => room.status === "available").length}
-            </div>
-            <p className="text-xs text-muted-foreground">Ready for use</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="classrooms">Classrooms</TabsTrigger>
-          <TabsTrigger value="labs">Labs</TabsTrigger>
-          <TabsTrigger value="special">Special Rooms</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          {/* Controls */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-1 gap-4">
-              <Input
-                placeholder="Search rooms by name, facilities, or subjects..."
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                placeholder="Search rooms..." 
+                className="pl-10" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
               />
-              <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Room type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {roomTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Building" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Buildings</SelectItem>
-                  {buildings.map((building) => (
-                    <SelectItem key={building} value={building}>
-                      {building}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Room
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add New Room/Lab</DialogTitle>
-                  <DialogDescription>
-                    Add a new room or laboratory to the system with facilities and equipment details.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="roomName">Room Name/Number</Label>
-                      <Input id="roomName" placeholder="Room 101" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="roomType">Room Type</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {roomTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type.charAt(0).toUpperCase() + type.slice(1)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="building">Building</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select building" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {buildings.map((building) => (
-                            <SelectItem key={building} value={building}>
-                              {building}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="floor">Floor</Label>
-                      <Input id="floor" type="number" placeholder="1" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="capacity">Capacity</Label>
-                      <Input id="capacity" type="number" placeholder="60" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="facilities">Facilities</Label>
-                    <Textarea id="facilities" placeholder="Projector, Whiteboard, AC, Wi-Fi" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="equipment">Equipment Details</Label>
-                    <Textarea id="equipment" placeholder="Digital Projector, Sound System, Marker Board" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="subjects">Suitable for Subjects</Label>
-                    <Textarea id="subjects" placeholder="Educational Psychology, General Teaching" />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAddRoom}>Add Room</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Room Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Classroom">Classroom</SelectItem>
+                <SelectItem value="Laboratory">Laboratory</SelectItem>
+                <SelectItem value="Lecture Hall">Lecture Hall</SelectItem>
+                <SelectItem value="Seminar Room">Seminar Room</SelectItem>
+                <SelectItem value="Conference Room">Conference Room</SelectItem>
+                <SelectItem value="Library">Library</SelectItem>
+                <SelectItem value="Office">Office</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Available">Available</SelectItem>
+                <SelectItem value="Occupied">Occupied</SelectItem>
+                <SelectItem value="Maintenance">Maintenance</SelectItem>
+                <SelectItem value="Reserved">Reserved</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Rooms Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>All Rooms & Labs ({filteredRooms.length})</CardTitle>
-              <CardDescription>
-                Complete inventory of academic spaces with their facilities and current status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Room Details</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Capacity & Type</TableHead>
-                    <TableHead>Facilities</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRooms.map((room) => (
-                    <TableRow key={room.id}>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium">{room.name}</div>
-                          <Badge variant="outline" className="capitalize">
-                            {room.type}
+      {/* Rooms Grid */}
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading rooms...</span>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredRooms.length === 0 ? (
+            <div className="col-span-full text-center py-8 text-muted-foreground">
+              {rooms.length === 0 ? "No rooms found. Add your first room!" : "No rooms match your filters."}
+            </div>
+          ) : (
+            filteredRooms.map((room) => (
+              <Card key={room.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{room.name}</CardTitle>
+                      <p className="text-sm text-muted-foreground font-mono">Room {room.room_number}</p>
+                    </div>
+                    <Building className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge className={getTypeColor(room.type)}>{room.type}</Badge>
+                    <Badge className={getStatusColor(room.status)}>{room.status}</Badge>
+                    <Badge variant="outline">
+                      <Users className="h-3 w-3 mr-1" />
+                      {room.capacity}
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    {room.building && (
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span>{room.building}{room.floor && `, ${room.floor}`}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {room.facilities && room.facilities.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-sm text-muted-foreground">Facilities:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {room.facilities.slice(0, 3).map((facility, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {facility}
                           </Badge>
-                          {room.accessibility && (
-                            <Badge variant="secondary">Accessible</Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <MapPin className="h-3 w-3" />
-                            {room.building}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Floor {room.floor}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <Users className="h-3 w-3" />
-                            {room.capacity} students
-                          </div>
-                          <div className="text-sm text-muted-foreground capitalize">
-                            {room.type}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {room.facilities.slice(0, 3).map((facility, index) => (
-                            <Badge key={index} variant="secondary" className="mr-1 mb-1 text-xs">
-                              {facility}
-                            </Badge>
-                          ))}
-                          {room.facilities.length > 3 && (
-                            <div className="text-sm text-muted-foreground">
-                              +{room.facilities.length - 3} more
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className={`h-2 w-2 rounded-full ${getStatusColor(room.status)}`} />
-                          <span className="text-sm capitalize">{room.status}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                        ))}
+                        {room.facilities.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{room.facilities.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
-        <TabsContent value="classrooms">
-          <Card>
-            <CardHeader>
-              <CardTitle>Classrooms ({getRoomsByType("classroom").length})</CardTitle>
-              <CardDescription>Regular teaching classrooms</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {getRoomsByType("classroom").map((room) => (
-                  <Card key={room.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{room.name}</CardTitle>
-                        <div className={`h-2 w-2 rounded-full ${getStatusColor(room.status)}`} />
-                      </div>
-                      <CardDescription>{room.building} - Floor {room.floor}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Capacity:</span>
-                          <span className="font-medium">{room.capacity} students</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {room.facilities.map((facility, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {facility}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" size="sm">
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDeleteRoom(room.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
 
-        <TabsContent value="labs">
-          <Card>
-            <CardHeader>
-              <CardTitle>Laboratories ({getRoomsByType("lab").length})</CardTitle>
-              <CardDescription>Specialized laboratory spaces</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                {getRoomsByType("lab").map((room) => (
-                  <Card key={room.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{room.name}</CardTitle>
-                        <div className={`h-2 w-2 rounded-full ${getStatusColor(room.status)}`} />
-                      </div>
-                      <CardDescription>{room.building} - Floor {room.floor}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Capacity:</span>
-                          <span className="font-medium">{room.capacity} students</span>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium mb-1">Equipment:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {room.equipment.slice(0, 3).map((item, index) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {item}
-                              </Badge>
-                            ))}
-                            {room.equipment.length > 3 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{room.equipment.length - 3} more
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium mb-1">Subjects:</div>
-                          <div className="text-sm text-muted-foreground">
-                            {room.subjects.join(", ")}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="special">
-          <Card>
-            <CardHeader>
-              <CardTitle>Special Rooms</CardTitle>
-              <CardDescription>Auditoriums, seminar halls, and other special purpose rooms</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {rooms.filter(room => ["seminar", "auditorium", "library"].includes(room.type)).map((room) => (
-                  <Card key={room.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-lg">{room.name}</CardTitle>
-                          <CardDescription>{room.building} - Floor {room.floor}</CardDescription>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="capitalize">{room.type}</Badge>
-                          <div className={`h-2 w-2 rounded-full ${getStatusColor(room.status)}`} />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <div className="text-sm font-medium mb-2">Details:</div>
-                          <div className="space-y-1 text-sm">
-                            <div>Capacity: {room.capacity} people</div>
-                            <div>Status: <span className="capitalize">{room.status}</span></div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium mb-2">Equipment & Facilities:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {room.equipment.map((item, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {item}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Summary Stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Room Statistics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="text-center p-4 border rounded-lg">
+              <p className="text-2xl font-bold text-primary">{filteredRooms.length}</p>
+              <p className="text-sm text-muted-foreground">Total Rooms</p>
+            </div>
+            <div className="text-center p-4 border rounded-lg">
+              <p className="text-2xl font-bold text-success">
+                {filteredRooms.filter(r => r.status === "Available").length}
+              </p>
+              <p className="text-sm text-muted-foreground">Available Rooms</p>
+            </div>
+            <div className="text-center p-4 border rounded-lg">
+              <p className="text-2xl font-bold text-warning">
+                {filteredRooms.reduce((sum, room) => sum + room.capacity, 0)}
+              </p>
+              <p className="text-sm text-muted-foreground">Total Capacity</p>
+            </div>
+            <div className="text-center p-4 border rounded-lg">
+              <p className="text-2xl font-bold text-info">
+                {new Set(filteredRooms.map(r => r.type)).size}
+              </p>
+              <p className="text-sm text-muted-foreground">Room Types</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
