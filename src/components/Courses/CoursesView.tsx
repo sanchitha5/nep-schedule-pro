@@ -3,51 +3,40 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpen, Plus, Search, Edit, Trash2 } from "lucide-react";
+import { BookOpen, Search, Edit, Trash2, Loader2 } from "lucide-react";
+import { useCourses } from "@/hooks/useCourses";
+import { AddCourseDialog } from "./AddCourseDialog";
+import { useState } from "react";
 
 const CoursesView = () => {
-  const courses = [
-    {
-      id: "EDU101",
-      name: "Educational Psychology",
-      program: "B.Ed.",
-      semester: 1,
-      credits: 4,
-      type: "Major",
-      faculty: "Dr. Smith",
-      hours: { theory: 3, practical: 1 }
-    },
-    {
-      id: "CUR201",
-      name: "Curriculum Development",
-      program: "M.Ed.",
-      semester: 2,
-      credits: 6,
-      type: "Core",
-      faculty: "Prof. Johnson",
-      hours: { theory: 4, practical: 2 }
-    },
-    {
-      id: "MATH301",
-      name: "Advanced Mathematics",
-      program: "FYUP",
-      semester: 3,
-      credits: 3,
-      type: "Minor",
-      faculty: "Dr. Brown",
-      hours: { theory: 3, practical: 0 }
-    },
-    {
-      id: "PRAC401",
-      name: "Teaching Practice",
-      program: "ITEP",
-      semester: 4,
-      credits: 8,
-      type: "Practical",
-      faculty: "Multiple",
-      hours: { theory: 2, practical: 6 }
+  const { courses, loading, addCourse, deleteCourse } = useCourses();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [programFilter, setProgramFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [semesterFilter, setSemesterFilter] = useState("all");
+
+  const filteredCourses = courses.filter(course => {
+    const matchesSearch = course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesProgram = programFilter === "all" || course.program === programFilter;
+    const matchesType = typeFilter === "all" || course.type.toLowerCase() === typeFilter;
+    const matchesSemester = semesterFilter === "all" || course.semester.toString() === semesterFilter;
+    
+    return matchesSearch && matchesProgram && matchesType && matchesSemester;
+  });
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setProgramFilter("all");
+    setTypeFilter("all");
+    setSemesterFilter("all");
+  };
+
+  const handleDeleteCourse = async (courseId: string) => {
+    if (confirm("Are you sure you want to delete this course?")) {
+      await deleteCourse(courseId);
     }
-  ];
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -68,10 +57,7 @@ const CoursesView = () => {
             Manage courses across all programs and semesters
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Course
-        </Button>
+        <AddCourseDialog onAddCourse={addCourse} />
       </div>
 
       {/* Search and Filters */}
@@ -80,23 +66,28 @@ const CoursesView = () => {
           <div className="grid gap-4 md:grid-cols-5">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search courses..." className="pl-10" />
+              <Input 
+                placeholder="Search courses..." 
+                className="pl-10" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             
-            <Select>
+            <Select value={programFilter} onValueChange={setProgramFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Program" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Programs</SelectItem>
-                <SelectItem value="bed">B.Ed.</SelectItem>
-                <SelectItem value="med">M.Ed.</SelectItem>
-                <SelectItem value="fyup">FYUP</SelectItem>
-                <SelectItem value="itep">ITEP</SelectItem>
+                <SelectItem value="B.Ed.">B.Ed.</SelectItem>
+                <SelectItem value="M.Ed.">M.Ed.</SelectItem>
+                <SelectItem value="FYUP">FYUP</SelectItem>
+                <SelectItem value="ITEP">ITEP</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
@@ -109,7 +100,7 @@ const CoursesView = () => {
               </SelectContent>
             </Select>
 
-            <Select>
+            <Select value={semesterFilter} onValueChange={setSemesterFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Semester" />
               </SelectTrigger>
@@ -119,17 +110,30 @@ const CoursesView = () => {
                 <SelectItem value="2">Semester 2</SelectItem>
                 <SelectItem value="3">Semester 3</SelectItem>
                 <SelectItem value="4">Semester 4</SelectItem>
+                <SelectItem value="5">Semester 5</SelectItem>
+                <SelectItem value="6">Semester 6</SelectItem>
               </SelectContent>
             </Select>
 
-            <Button variant="outline">Clear Filters</Button>
+            <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Courses Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => (
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading courses...</span>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredCourses.length === 0 ? (
+            <div className="col-span-full text-center py-8 text-muted-foreground">
+              {courses.length === 0 ? "No courses found. Add your first course!" : "No courses match your filters."}
+            </div>
+          ) : (
+            filteredCourses.map((course) => (
           <Card key={course.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
@@ -161,7 +165,7 @@ const CoursesView = () => {
               <div className="text-sm">
                 <span className="text-muted-foreground">Hours:</span>
                 <span className="ml-1">
-                  Theory: {course.hours.theory}, Practical: {course.hours.practical}
+                  Theory: {course.theory_hours}, Practical: {course.practical_hours}
                 </span>
               </div>
 
@@ -170,15 +174,21 @@ const CoursesView = () => {
                   <Edit className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleDeleteCourse(course.id)}
+                >
                   <Trash2 className="h-4 w-4 mr-1" />
                   Delete
                 </Button>
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Summary Stats */}
       <Card>
@@ -188,24 +198,24 @@ const CoursesView = () => {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
             <div className="text-center p-4 border rounded-lg">
-              <p className="text-2xl font-bold text-primary">{courses.length}</p>
+              <p className="text-2xl font-bold text-primary">{filteredCourses.length}</p>
               <p className="text-sm text-muted-foreground">Total Courses</p>
             </div>
             <div className="text-center p-4 border rounded-lg">
               <p className="text-2xl font-bold text-success">
-                {courses.reduce((sum, course) => sum + course.credits, 0)}
+                {filteredCourses.reduce((sum, course) => sum + course.credits, 0)}
               </p>
               <p className="text-sm text-muted-foreground">Total Credits</p>
             </div>
             <div className="text-center p-4 border rounded-lg">
               <p className="text-2xl font-bold text-warning">
-                {courses.reduce((sum, course) => sum + course.hours.theory, 0)}
+                {filteredCourses.reduce((sum, course) => sum + course.theory_hours, 0)}
               </p>
               <p className="text-sm text-muted-foreground">Theory Hours</p>
             </div>
             <div className="text-center p-4 border rounded-lg">
               <p className="text-2xl font-bold text-info">
-                {courses.reduce((sum, course) => sum + course.hours.practical, 0)}
+                {filteredCourses.reduce((sum, course) => sum + course.practical_hours, 0)}
               </p>
               <p className="text-sm text-muted-foreground">Practical Hours</p>
             </div>
