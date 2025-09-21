@@ -97,12 +97,57 @@ const StudentDashboard = () => {
                     <span className="text-muted-foreground">Student ID:</span>
                     <span>{profile?.student_id || 'Not assigned'}</span>
                   </div>
-                </div>
-                <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm">
                     <BookOpen className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Department:</span>
                     <span>{profile?.department || 'Not assigned'}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Program:</span>
+                    <span>Bachelor of Education</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Semester:</span>
+                    <span>4th Semester</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Batch:</span>
+                    <span>2023-2025</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Academic Details */}
+              <div className="pt-4 border-t">
+                <h4 className="font-semibold mb-3">Academic Information</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div>
+                    <h5 className="font-medium text-sm text-muted-foreground mb-2">Major Subjects</h5>
+                    <div className="space-y-1">
+                      <Badge variant="default" className="mr-1 mb-1">Educational Psychology</Badge>
+                      <Badge variant="default" className="mr-1 mb-1">Curriculum Studies</Badge>
+                      <Badge variant="default" className="mr-1 mb-1">Teaching Methods</Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-sm text-muted-foreground mb-2">Minor Subjects</h5>
+                    <div className="space-y-1">
+                      <Badge variant="secondary" className="mr-1 mb-1">Philosophy of Education</Badge>
+                      <Badge variant="secondary" className="mr-1 mb-1">Research Methods</Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-sm text-muted-foreground mb-2">Current Subjects</h5>
+                    <div className="space-y-1">
+                      <Badge variant="outline" className="mr-1 mb-1">Subject Pedagogy</Badge>
+                      <Badge variant="outline" className="mr-1 mb-1">Assessment & Evaluation</Badge>
+                      <Badge variant="outline" className="mr-1 mb-1">School Management</Badge>
+                    </div>
                   </div>
                 </div>
               </div>
