@@ -11,10 +11,25 @@ import RoomsView from "@/components/Rooms/RoomsView";
 import SchedulesView from "@/components/Schedules/SchedulesView";
 import ReportsView from "@/components/Reports/ReportsView";
 import SettingsView from "@/components/Settings/SettingsView";
+import StudentDashboard from "@/components/Student/StudentDashboard";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
+  const { profile } = useAuth();
+
+  // If user is a student, show only student dashboard
+  if (profile?.role === 'student') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="p-6">
+          <StudentDashboard />
+        </main>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (activeSection) {
