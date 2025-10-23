@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudents } from "@/hooks/useStudents";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, 
   Clock, 
@@ -47,6 +48,55 @@ const FacultyDashboard = () => {
   const { profile } = useAuth();
   const { students, loading: studentsLoading } = useStudents();
   const { toast } = useToast();
+  const [facultyData, setFacultyData] = useState<any>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (profile?.faculty_id) {
+      fetchFacultyData();
+      fetchCourses();
+    }
+  }, [profile]);
+
+  const fetchFacultyData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('faculty')
+        .select('*')
+        .eq('faculty_id', profile?.faculty_id)
+        .single();
+
+      if (error) throw error;
+      setFacultyData(data);
+      setPersonalDetails({
+        qualification: data.qualification || "Not specified",
+        specialization: data.specialization || "Not specified",
+        experience: data.experience_years ? `${data.experience_years} years` : "Not specified",
+        phone: data.phone || "Not provided",
+        address: "Not provided",
+        emergencyContact: "Not provided"
+      });
+    } catch (error) {
+      console.error('Error fetching faculty data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
 
   // State management
   const [personalDetails, setPersonalDetails] = useState({
@@ -428,8 +478,8 @@ const FacultyDashboard = () => {
             <div className="flex-1 space-y-4">
               <div>
                 <h3 className="text-2xl font-bold">{profile?.full_name}</h3>
-                <p className="text-muted-foreground text-lg">{personalDetails.qualification}</p>
-                <p className="text-sm text-muted-foreground">{personalDetails.specialization}</p>
+                <p className="text-muted-foreground text-lg">{facultyData?.qualification || personalDetails.qualification}</p>
+                <p className="text-sm text-muted-foreground">{facultyData?.specialization || personalDetails.specialization}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2 text-sm">
@@ -438,15 +488,23 @@ const FacultyDashboard = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{personalDetails.phone}</span>
+                  <span>{facultyData?.phone || personalDetails.phone}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <BookOpen className="h-4 w-4 text-muted-foreground" />
-                  <span>{profile?.department || 'Department of Education'}</span>
+                  <span>{facultyData?.department || profile?.department || 'Department of Education'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                  <span>Faculty ID: {profile?.faculty_id || 'FAC001'}</span>
+                  <span>Faculty ID: {facultyData?.faculty_id || profile?.faculty_id || 'Not assigned'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <span>Designation: {facultyData?.designation || 'Not specified'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span>Experience: {facultyData?.experience_years ? `${facultyData.experience_years} years` : 'Not specified'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-muted-foreground" />

@@ -7,8 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar, User, BookOpen, Clock, Mail, Phone, GraduationCap, Download, Edit, Bell, AlertTriangle, Beaker } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -21,6 +22,47 @@ const StudentDashboard = () => {
     { id: 1, type: "timetable", message: "Teaching Methods class moved to Room 203", time: "2 hours ago" },
     { id: 2, type: "exam", message: "Midterm exam scheduled for Educational Psychology on March 15", time: "1 day ago" }
   ]);
+  const [studentData, setStudentData] = useState<any>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (profile?.student_id) {
+      fetchStudentData();
+      fetchCourses();
+    }
+  }, [profile]);
+
+  const fetchStudentData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('student_id', profile?.student_id)
+        .single();
+
+      if (error) throw error;
+      setStudentData(data);
+    } catch (error) {
+      console.error('Error fetching student data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -204,48 +246,43 @@ const StudentDashboard = () => {
                   <div className="flex items-center gap-2 text-sm">
                     <GraduationCap className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Program:</span>
-                    <span>Bachelor of Education</span>
+                    <span>{studentData?.program || 'Not assigned'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <BookOpen className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Semester:</span>
-                    <span>4th Semester</span>
+                    <span>{studentData?.semester ? `${studentData.semester}${studentData.semester === 1 ? 'st' : studentData.semester === 2 ? 'nd' : studentData.semester === 3 ? 'rd' : 'th'} Semester` : 'Not assigned'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Batch:</span>
-                    <span>2023-2025</span>
+                    <span>{studentData?.batch || 'Not assigned'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Phone:</span>
+                    <span>{studentData?.phone || 'Not provided'}</span>
                   </div>
                 </div>
               </div>
               
               {/* Academic Details */}
               <div className="pt-4 border-t">
-                <h4 className="font-semibold mb-3">Academic Information</h4>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <div>
-                    <h5 className="font-medium text-sm text-muted-foreground mb-2">Major Subjects</h5>
-                    <div className="space-y-1">
-                      <Badge variant="default" className="mr-1 mb-1">Educational Psychology</Badge>
-                      <Badge variant="default" className="mr-1 mb-1">Curriculum Studies</Badge>
-                      <Badge variant="default" className="mr-1 mb-1">Teaching Methods</Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <h5 className="font-medium text-sm text-muted-foreground mb-2">Minor Subjects</h5>
-                    <div className="space-y-1">
-                      <Badge variant="secondary" className="mr-1 mb-1">Philosophy of Education</Badge>
-                      <Badge variant="secondary" className="mr-1 mb-1">Research Methods</Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <h5 className="font-medium text-sm text-muted-foreground mb-2">Current Subjects</h5>
-                    <div className="space-y-1">
-                      <Badge variant="outline" className="mr-1 mb-1">Subject Pedagogy</Badge>
-                      <Badge variant="outline" className="mr-1 mb-1">Assessment & Evaluation</Badge>
-                      <Badge variant="outline" className="mr-1 mb-1">School Management</Badge>
-                    </div>
-                  </div>
+                <h4 className="font-semibold mb-3">Enrolled Courses</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {courses.length > 0 ? (
+                    courses.slice(0, 6).map((course) => (
+                      <div key={course.id} className="flex items-center justify-between p-2 border rounded-lg">
+                        <div>
+                          <div className="font-medium text-sm">{course.name}</div>
+                          <div className="text-xs text-muted-foreground">{course.type} • {course.credits} credits</div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">{course.program}</Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No courses found</p>
+                  )}
                 </div>
               </div>
             </div>
